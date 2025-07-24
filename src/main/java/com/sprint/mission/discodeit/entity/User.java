@@ -7,16 +7,14 @@ public class User {
     private final UUID id;
     private String username;
     private String password;
-    private final Long createdAt;
-    private Long updatedAt;
+    private final Long createdAt = System.currentTimeMillis();
+    private Long updatedAt = System.currentTimeMillis();
 
     public User(String username, String password) {
-        long now = System.currentTimeMillis();
         this.id = UUID.randomUUID();
         this.username = username;
         this.password = password;
-        this.createdAt = now;
-        this.updatedAt = now;
+        this.updatedAt = getUpdatedAt();
     }
 
     public void update(String newUsername, String newPassword) {
