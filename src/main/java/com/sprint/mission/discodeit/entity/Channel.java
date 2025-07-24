@@ -5,15 +5,14 @@ import java.util.Objects;
 public class Channel {
     private final String channelName;
     private final String creatorUser;
-    private final Long createdAt;
-    private Long updatedAt;
+    private final Long createdAt = System.currentTimeMillis();
+    private Long updatedAt = System.currentTimeMillis();
 
     public Channel(String name, String creatorUser) {
         long now = System.currentTimeMillis();
         this.channelName = name;
         this.creatorUser = creatorUser;
-        this.createdAt = now;
-        this.updatedAt = now;
+        this.updatedAt = getUpdatedAt();
     }
 
     public String getChannelName() {
