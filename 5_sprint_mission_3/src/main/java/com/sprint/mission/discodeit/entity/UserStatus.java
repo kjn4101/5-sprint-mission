@@ -22,8 +22,6 @@ public class UserStatus implements Serializable {
 
     private UUID userId;
     private Instant lastAccessAt;
-    @Setter
-    private boolean online;
 
     public UserStatus(UUID userId, Instant lastAccessAt) {
         this.id = UUID.randomUUID();
@@ -32,7 +30,6 @@ public class UserStatus implements Serializable {
 
         this.userId = userId;
         this.lastAccessAt = lastAccessAt;
-        this.online = true;
     }
 
     public void userAccessUpdate(Instant newLastAccessAt) {
@@ -40,7 +37,6 @@ public class UserStatus implements Serializable {
             this.lastAccessAt = newLastAccessAt;
             this.updatedAt = Instant.now();
         }
-        this.online = true;
     }
 
     public boolean isOnline() {

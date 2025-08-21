@@ -19,10 +19,11 @@ public class BinaryContentController {
     private final BinaryContentService binaryContentService;
 
     @RequestMapping(path = "find", method = RequestMethod.GET)
-    public ResponseEntity<Optional<BinaryContent>> find(@RequestParam("binaryContentId") UUID binaryContentId) {
+    public ResponseEntity<BinaryContent> find(@RequestParam("binaryContentId") UUID binaryContentId) {
         Optional<BinaryContent> binaryContent = binaryContentService.findById(binaryContentId);
-        return ResponseEntity.status(HttpStatus.OK).body(binaryContent);
-    }
+        return binaryContent.map(content -> ResponseEntity.status(200).body(content))
+                .orElseGet(() -> ResponseEntity.status(404).build());
+    } // ResponseEntity가 BinaryContent를 반환, 존재할 경우 200 OK, 존재하지 않을 경우 404 에러 반환.
 
     @RequestMapping(path = "findMultiple", method = RequestMethod.GET)
     public ResponseEntity<List<BinaryContent>> findMultiple(@RequestParam("binaryContentIds") List<UUID> binaryContentIds) {

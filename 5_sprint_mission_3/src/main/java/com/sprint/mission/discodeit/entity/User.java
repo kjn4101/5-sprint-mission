@@ -37,6 +37,7 @@ public class User implements Serializable {
         this.email = email;
         this.password = password;
         this.profileImageId = profileImageId;
+        this.lastAccessAt = Instant.now();
     }
 
     public User(String username, String email, String password) {
@@ -71,8 +72,10 @@ public class User implements Serializable {
     }
 
     public void updateLastAccessAt(Instant lastAccessAt) {
-        this.lastAccessAt = lastAccessAt;
-        this.updatedAt = Instant.now();
+        if (lastAccessAt != null && lastAccessAt.equals(this.lastAccessAt)) {
+            this.lastAccessAt = lastAccessAt;
+            this.updatedAt = Instant.now();
+        }
     }
 
     public boolean isOnline() {

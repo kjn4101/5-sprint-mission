@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,15 +24,19 @@ public class ChannelController {
     private final ChannelService channelService;
 
     @RequestMapping(path = "public/create", method = RequestMethod.POST)
-    public ResponseEntity<Channel> createPublicChannel(@RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
-        Channel created = channelService.createPublicChannel(publicChannelCreateRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<PublicChannelResponseDto> createPublicChannel(
+            @RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
+        PublicChannelResponseDto dto = channelService.createPublicChannel(publicChannelCreateRequest);
+        URI location = URI.create("/channels/" + dto.id());
+        return ResponseEntity.created(location).body(dto);
     }
 
     @RequestMapping(path = "private/create", method = RequestMethod.POST)
-    public ResponseEntity<Channel> createPrivateChannel(@RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
-        Channel created = channelService.createPrivateChannel(privateChannelCreateRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<PrivateChannelResponseDto> createPrivateChannel(
+            @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
+        PrivateChannelResponseDto dto = channelService.createPrivateChannel(privateChannelCreateRequest);
+        URI location = URI.create("/channels/" + dto.id());
+        return ResponseEntity.created(location).body(dto);
     }
 
     @RequestMapping(path = "public/find/{id}", method = RequestMethod.GET)

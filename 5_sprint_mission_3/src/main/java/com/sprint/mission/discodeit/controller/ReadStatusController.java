@@ -10,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -22,23 +20,17 @@ public class ReadStatusController {
     private final ReadStatusService readStatusService;
 
     @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public ResponseEntity<ReadStatus> create(@RequestBody ReadStatusCreateRequest request) {
-        ReadStatus readStatus = new ReadStatus(
-                request.userId(),
-                request.channelId(),
-                request.lastReadAt() != null ? request.lastReadAt() : Instant.now()
-        );
-        ReadStatus created = readStatusService.create(readStatus);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<ReadStatus> create(
+            @RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
+        ReadStatus newReadStatus = readStatusService.create(readStatusCreateRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newReadStatus);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<ReadStatus> update(@PathVariable UUID id, @RequestBody ReadStatusUpdateRequest request) {
-        ReadStatus readStatus = readStatusService.findByUserIdAndChannelId(request.userId(), request.channelId())
-                .orElseThrow(() -> new IllegalArgumentException("ReadStatus가 존재하지 않습니다."));
-        readStatus.readUpdate(request.lastReadAt());
-        ReadStatus updated = readStatusService.update(readStatus);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<ReadStatus> update(
+            @PathVariable UUID id, @RequestBody ReadStatusUpdateRequest readStatusUpdateRequest) {
+        ReadStatus updateReadStatus = readStatusService.update(id, readStatusUpdateRequest);
+        return ResponseEntity.ok(updateReadStatus);
     }
 
     @RequestMapping(value = "/findAllByUser/{userId}", method = RequestMethod.GET)

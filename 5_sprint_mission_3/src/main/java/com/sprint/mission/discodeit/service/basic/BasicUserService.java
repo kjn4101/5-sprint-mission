@@ -35,18 +35,6 @@ public class BasicUserService implements UserService {
         return userRepository.save(user);
     }
 
-//    @Override
-//    public User find(UUID userId) {
-//        return userRepository.findById(userId)
-//                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
-//    }
-//
-//    @Override
-//    public List<User> findAll() {
-//        return userRepository.findAll();
-//    }
-
-
     @Override
     public UserResponseDto find(UUID userId) {
         User user = userRepository.findById(userId)
@@ -79,15 +67,6 @@ public class BasicUserService implements UserService {
                 ))
                 .toList();
     }
-
-
-//    @Override
-//    public User update(UUID userId, String newUsername, String newEmail, String newPassword) {
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
-//        user.update(newUsername, newEmail, newPassword);
-//        return userRepository.save(user);
-//    }
 
     @Override
     public UserResponseDto update(UserUpdateRequest request) {

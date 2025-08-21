@@ -32,27 +32,27 @@ public class BasicChannelService implements ChannelService {
     private final MessageRepository messageRepository;
     private final ChannelParticipantRepository channelParticipantRepository;
 
-//    public BasicChannelService(ChannelRepository channelRepository, ReadStatusRepository readStatusRepository, UserRepository userRepository, MessageRepository messageRepository, ChannelParticipantRepository channelParticipantRepository) {
-//        this.channelRepository = channelRepository;
-//        this.readStatusRepository = readStatusRepository;
-//        this.userRepository = userRepository;
-//        this.messageRepository = messageRepository;
-//        this.channelParticipantRepository = channelParticipantRepository;
-//    }
-
-
     @Override
-    public Channel createPublicChannel(PublicChannelCreateRequest request) {
-        Channel channel = new Channel(ChannelType.PUBLIC, request.name(), request.description());
-        return channelRepository.save(channel);
+    public PublicChannelResponseDto createPublicChannel(PublicChannelCreateRequest publicChannelCreateRequest) {
+        Channel channel = new Channel(ChannelType.PUBLIC, publicChannelCreateRequest.name(), publicChannelCreateRequest.description());
+        channelRepository.save(channel);
+
+        Instant lastMessageAt = null;
+        return new PublicChannelResponseDto(
+                channel.getId(),
+                channel.getName(),
+                channel.getType(),
+                channel.getDescription(),
+                lastMessageAt
+        );
     }
 
     @Override
-    public Channel createPrivateChannel(PrivateChannelCreateRequest request) {
-        Channel channel = new Channel(ChannelType.PRIVATE, request.name(), request.description());
+    public PrivateChannelResponseDto createPrivateChannel(PrivateChannelCreateRequest privateChannelCreateRequest) {
+        Channel channel = new Channel(ChannelType.PRIVATE, privateChannelCreateRequest.name(), privateChannelCreateRequest.description());
         channel = channelRepository.save(channel);
 
-        for (UUID userId : request.participantUserIds()) {
+        for (UUID userId : privateChannelCreateRequest.participantUserIds()) {
             if (!userRepository.existsById(userId)) {
                 throw new NoSuchElementException("존재하지 않는 사용자 ID입니다: " + userId);
             }
@@ -63,7 +63,17 @@ public class BasicChannelService implements ChannelService {
             ReadStatus readStatus = new ReadStatus(channel.getId(), userId);
             readStatusRepository.save(readStatus);
         }
-        return channel;
+        List<UUID> participantIds = channelParticipantRepository.findAllByChannelId(channel.getId())
+                .stream()
+                .map(ChannelParticipant::getUserId)
+                .toList();
+
+        return new PrivateChannelResponseDto(
+                channel.getId(),
+                channel.getName(),
+                channel.getType(),
+                participantIds
+        );
     }
 
     @Override
@@ -135,10 +145,14 @@ public class BasicChannelService implements ChannelService {
                                 .stream()
                                 .map(ChannelParticipant::getUserId)
                                 .toList();
-                        return new PrivateChannelResponseDto(channel.getId(), channel.getName(), channel.getType(), participantIds);
+                        return (ChannelResponse) new PrivateChannelResponseDto(
+                                channel.getId(),
+                                channel.getName(),
+                                channel.getType(),
+                                participantIds);
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
