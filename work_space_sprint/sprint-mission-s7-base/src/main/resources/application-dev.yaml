@@ -15,3 +15,7 @@ logging:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
     com.sprint.mission.discodeit: debug  # 프로젝트 패키지는 debug 레벨
+
+management:
+  server:
+    port: 8081

@@ -15,3 +15,11 @@ logging:
     org.hibernate.SQL: warn
     org.hibernate.orm.jdbc.bind: warn
     com.sprint.mission.discodeit: info  # 프로젝트 패키지는 info 레벨
+
+management:
+  server:
+    port: 8080  # 운영환경은 같은 포트 사용
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics  # 운영환경에서는 loggers 제외
