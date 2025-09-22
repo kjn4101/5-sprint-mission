@@ -1,0 +1,9 @@
+# prod 운영환경
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.springframework: ERROR

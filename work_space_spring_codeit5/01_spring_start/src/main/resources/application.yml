@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: 01_spring_start
+  profiles:
+    active: dev # dev / test / prod
+
+server:
+  tomcat:
+    basedir: .
+    access log:
+      enabled: true
+      directory: logs
+      pattern: '%a %l %u %t "%r" %s %b'
+      prefix: access_log
+      suffix: .log
+      rotate: true
