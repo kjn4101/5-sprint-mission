@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -159,5 +160,22 @@ class BasicUserServiceTest {
 
         then(userRepository).should().existsById(userId);
         then(userRepository).should(times(0)).deleteById(userId);
+    }
+
+    @Test
+    @DisplayName("모든 사용자 조회 - 성공")
+    void findAll_Success() {
+        // given
+        List<User> users = List.of(new User("user1", "email1", "pass", null));
+        UserDto userDto = new UserDto(UUID.randomUUID(), "user1", "email1", null, false);
+
+        given(userRepository.findAllWithProfileAndStatus()).willReturn(users);
+        given(userMapper.toDto(any(User.class))).willReturn(userDto);
+
+        // when
+        List<UserDto> result = userService.findAll();
+
+        // then
+        assertThat(result).hasSize(1);
     }
 }
