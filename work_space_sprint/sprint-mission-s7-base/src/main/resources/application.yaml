@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: discodeit
+  boot:
+    admin:
+      client:
+        instance:
+          name: discodeit
+  servlet:
+    multipart:
+      maxFileSize: 10MB
+      maxRequestSize: 30MB
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  profiles:
+    active: dev
+
+# Actuator 설정 추가
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+# 애플리케이션 정보 설정
+info:
+  app:
+    name: Discodeit
+    version: 1.7.0
+  java:
+    version: 17
+  spring:
+    boot:
+      version: 3.4.0
+  datasource:
+    url: ${spring.datasource.url:jdbc:postgresql://localhost:5432/discodeit}
+    driver: ${spring.datasource.driver-class-name:org.postgresql.Driver}
+  jpa:
+    ddl-auto: ${spring.jpa.hibernate.ddl-auto:validate}
+  storage:
+    type: ${discodeit.storage.type:local}
+    path: ${discodeit.storage.local.root-path:.discodeit/storage}
+  multipart:
+    max-file-size: ${spring.servlet.multipart.maxFileSize:10MB}
+    max-request-size: ${spring.servlet.multipart.maxRequestSize:30MB}
+
+logging:
+  level:
+    root: info
+
+discodeit:
+  storage:
+    type: local
+    local:
+      root-path: .discodeit/storage
