@@ -7,16 +7,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
   private final LoginSuccessHandler loginSuccessHandler;
@@ -39,17 +46,48 @@ public class SecurityConfig {
             .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
         )
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/users", "/api/auth/login", "/api/auth/csrf-token").permitAll()
-            .requestMatchers("/api/auth/me").authenticated()
+            .requestMatchers(
+                "/api/users",                    // 회원가입
+                "/api/auth/login",               // 로그인
+                "/api/auth/logout",              // 로그아웃
+                "/api/auth/csrf-token",          // CSRF 토큰
+                "/swagger-ui/**",                // Swagger UI
+                "/v3/api-docs/**",               // Swagger API Docs
+                "/actuator/**"                   // Actuator
+            ).permitAll()
             .anyRequest().authenticated()
+        )
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+              response.setStatus(HttpStatus.FORBIDDEN.value());
+              response.setContentType("application/json;charset=UTF-8");
+              response.getWriter().write("{\"message\":\"접근 권한이 없습니다.\"}");
+            })
         );
 
-        return http.build();
+    return http.build();
   }
 
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.withDefaultRolePrefix()
+        .role("ADMIN").implies("CHANNEL_MANAGER")
+        .role("CHANNEL_MANAGER").implies("USER")
+        .build();
+  }
+
+  @Bean
+  static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
+      RoleHierarchy roleHierarchy) {
+    DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+    handler.setRoleHierarchy(roleHierarchy);
+    return handler;
   }
 
 }
