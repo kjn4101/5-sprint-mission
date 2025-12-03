@@ -3,11 +3,17 @@ package com.sprint.mission.discodeit.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.sprint.mission.discodeit.dto.auth.JwtDto;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,16 +23,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtRegistry jwtRegistry;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -55,6 +57,15 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
             // Refresh Token을 쿠키에 저장
             Cookie refreshTokenCookie = jwtTokenProvider.generateRefreshTokenCookie(refreshToken);
             response.addCookie(refreshTokenCookie);
+
+            // JwtRegistry에 토큰 정보 등록
+            JwtInformation jwtInformation = new JwtInformation(
+                userDetails.getUserDto(),
+                accessToken,
+                refreshToken
+            );
+
+            jwtRegistry.registerJwtInformation(jwtInformation);
 
             // Access Token을 응답 Body에 포함
             JwtDto jwtDto = new JwtDto(

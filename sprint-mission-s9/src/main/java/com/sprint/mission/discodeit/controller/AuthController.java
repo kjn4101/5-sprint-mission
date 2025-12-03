@@ -7,15 +7,14 @@ import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.auth.InvalidRefreshTokenException;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +25,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class AuthController implements AuthApi {
 
   private final AuthService authService;
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
   private final UserService userService;
 
   // CSRF 토큰 발급
@@ -61,6 +64,11 @@ public class AuthController implements AuthApi {
         throw new InvalidRefreshTokenException(ErrorCode.INVALID_REFRESH_TOKEN);
       }
 
+      if (!jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
+        log.debug("Refresh token not found in registry");
+        throw new InvalidRefreshTokenException(ErrorCode.INVALID_REFRESH_TOKEN);
+      }
+
       String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
       UUID userId = jwtTokenProvider.getUserId(refreshToken);
 
@@ -71,6 +79,15 @@ public class AuthController implements AuthApi {
       String newRefreshToken = jwtTokenProvider.generateRefreshToken(username, userId);
       Cookie newRefreshTokenCookie = jwtTokenProvider.generateRefreshTokenCookie(newRefreshToken);
       response.addCookie(newRefreshTokenCookie);
+
+      UserDto userDto = new UserDto(userId, username, null, null, null, null);
+      JwtInformation newJwtInformation = new JwtInformation(
+          userDto,
+          newAccessToken,
+          newRefreshToken
+      );
+
+      jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
 
       JwtDto jwtDto = new JwtDto(
           newAccessToken,
@@ -108,7 +125,7 @@ public class AuthController implements AuthApi {
 
   // 권한 업데이트
   @PutMapping("/role")
-  public ResponseEntity<UserDto> updateRole(@RequestBody RoleUpdateRequest request){
+  public ResponseEntity<UserDto> updateRole(@RequestBody RoleUpdateRequest request) {
     UserDto userDto = authService.updateRole(request);
     return ResponseEntity.ok(userDto);
   }

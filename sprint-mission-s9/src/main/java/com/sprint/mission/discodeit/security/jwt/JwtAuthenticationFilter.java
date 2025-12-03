@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtRegistry jwtRegistry;
 
     @Override
     protected void doFilterInternal(
@@ -43,21 +44,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 2. 토큰이 있고 유효한 경우에만 인증 처리
             if (token != null && jwtTokenProvider.validateAccessToken(token)) {
-                // 3. 토큰에서 사용자 정보 추출
+                // 3. JwtRegistry에서 토큰 상태 확인
+                String tokenId = jwtTokenProvider.getTokenId(token);
+                if (!jwtRegistry.hasActiveJwtInformationByAccessToken(tokenId)) {
+                    log.debug("JWT token not found in registry or expired: {}", tokenId);
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
+                // 4. 토큰에서 사용자 정보 추출
                 String username = jwtTokenProvider.getUsernameFromToken(token);
                 UUID userId = jwtTokenProvider.getUserId(token);
                 List<String> roles = jwtTokenProvider.getRolesFromToken(token);
 
-                // 4. Role enum 추출
+                // 5. Role enum 추출
                 Role role = extractRoleFromAuthorities(roles);
 
-                // 5. UserDto 생성
+                // 6. UserDto 생성 (JWT 인증 시에는 일부 정보만 포함)
                 UserDto userDto = new UserDto(userId, username, null, null, null, role);
 
-                // 6. DiscodeitUserDetails 생성
+                // 7. DiscodeitUserDetails 생성 (비밀번호는 빈 문자열)
                 DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, "");
 
-                // 7. Authentication 객체 생성 및 SecurityContext에 저장
+                // 8. Authentication 객체 생성 및 SecurityContext에 저장
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -65,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities()
                     );
 
-                // 요청 정보 추가
+                // 요청 정보 추가 (IP, 세션 등)
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 // SecurityContext에 인증 정보 설정
@@ -80,7 +90,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext();
         }
 
-        // 6. 다음 필터로 요청 전달
+        // 9. 다음 필터로 요청 전달
         filterChain.doFilter(request, response);
     }
 
