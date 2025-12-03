@@ -170,7 +170,7 @@ public class BasicUserService implements UserService {
         .orElseThrow(() -> UserNotFoundException.withId(userId));
 
     Role oldRole = user.getRole();
-    user.setRole(newRole);
+    user.updateRole(newRole);
 
     User savedUser = userRepository.save(user);
 
